@@ -112,7 +112,11 @@ fig = px.choropleth(
     labels={"ColorScaleEAL": "Predicted Loss (scaled)"},
     scope="usa"
 )
-fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+fig.update_layout(
+    margin={"r": 0, "t": 0, "l": 0, "b": 0},
+    paper_bgcolor="#000000",
+    geo=dict(bgcolor="#000000")
+)
 st.plotly_chart(fig, use_container_width=True)
 
 # Top 15 counties table
