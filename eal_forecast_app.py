@@ -86,11 +86,8 @@ X = df[feature_cols].copy()
 for col in feature_cols:
     X[col] *= st.session_state.multipliers.get(col, 1.0)
 
-# Predictions
-df["BASE_EAL_VALT"] = model.predict(df[feature_cols])
 df["Predicted_EAL_VALT"] = model.predict(X)
-df["Delta_EAL"] = df["Predicted_EAL_VALT"] - df["BASE_EAL_VALT"]
-df["ColorScaleEAL"] = df["Delta_EAL"]
+df["ColorScaleEAL"] = np.log1p(df["Predicted_EAL_VALT"])
 
 # Filter by selected region
 df_filtered = df[df["STATE"].isin(selected_states)]
@@ -99,29 +96,29 @@ if df_filtered.empty:
     df_filtered = df.copy()
 
 # Main dashboard content
-st.title("Forecasted Disaster Loss Differences by County")
+st.title("Forecasted Disaster Losses by County")
 st.markdown("""
 This dashboard forecasts expected annual losses (EAL) by county across the United States based on user-defined hazard multipliers.
-The map shows the difference between the base forecast and your adjusted scenario. Positive values indicate increased losses.
+Use the filters to explore how different hazard scenarios impact forecasted losses.
 """)
 
-# Choropleth map showing difference
-st.subheader("Forecast Difference Map")
+# Choropleth map
+st.subheader("Forecast Map")
 fig = px.choropleth(
     df_filtered,
     geojson="https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json",
     locations="FIPS",
     color="ColorScaleEAL",
-    color_continuous_scale="RdBu",
-    range_color=(df_filtered["ColorScaleEAL"].min(), df_filtered["ColorScaleEAL"].max()),
-    labels={"ColorScaleEAL": "Change in Predicted Loss"},
+    color_continuous_scale="Viridis",
+    range_color=(df_filtered["ColorScaleEAL"].min(), df_filtered["ColorScaleEAL"].quantile(0.95)),
+    labels={"ColorScaleEAL": "Predicted Loss (log scale)"},
     scope="usa"
 )
 fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 st.plotly_chart(fig, use_container_width=True)
 
-# Top 15 counties by increase
-st.subheader("Top 15 Counties by Increase in Predicted Loss")
-top_15 = df_filtered[["FIPS", "STATE", "COUNTY", "Delta_EAL"]].sort_values(
-    by="Delta_EAL", ascending=False).head(15)
-st.dataframe(top_15.style.format({"Delta_EAL": "${:,.0f}"}))
+# Top 15 counties table
+st.subheader("Top 15 Counties by Predicted Loss")
+top_15 = df_filtered[["FIPS", "STATE", "COUNTY", "Predicted_EAL_VALT"]].sort_values(
+    by="Predicted_EAL_VALT", ascending=False).head(15)
+st.dataframe(top_15.style.format({"Predicted_EAL_VALT": "${:,.0f}"}))
