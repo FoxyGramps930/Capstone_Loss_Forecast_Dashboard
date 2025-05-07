@@ -23,9 +23,9 @@ st.markdown("""
 
 
 # Load model and features
-model = joblib.load("rf_model.pkl")
-with open("feature_columns.json") as f:
-    feature_cols = json.load(f)
+import gzip
+with gzip.open("rf_model.pkl.gz", "rb") as f:
+    model = joblib.load(f)
 
 # Region definitions
 region_map = {
