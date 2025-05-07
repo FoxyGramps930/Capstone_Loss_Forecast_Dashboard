@@ -54,12 +54,12 @@ if "multipliers" not in st.session_state:
 
 # Sidebar controls
 with st.sidebar:
+    st.header("Hazard Multipliers")
+    st.caption("Use the sliders to simulate changes in severity for different types of hazards.")
+
     if st.button("Reset All Multipliers"):
         for col in feature_cols:
             st.session_state.multipliers[col] = 1.0
-
-    st.header("Hazard Multipliers")
-    st.caption("Use the sliders to simulate changes in severity for different types of hazards.")
 
     for group, hazards in group_definitions.items():
         with st.expander(group, expanded=False):
@@ -92,6 +92,14 @@ This interactive dashboard predicts expected annual losses (EAL) by U.S. county 
 - View the top 15 counties by predicted loss below the map.
 """)
 
+# High-level metrics
+total_predicted = df["Predicted_EAL_VALT"].sum()
+average_predicted = df["Predicted_EAL_VALT"].mean()
+
+col1, col2 = st.columns(2)
+col1.metric("Total Predicted Annual Loss (Nationwide)", f"${total_predicted/1e9:,.2f}B")
+col2.metric("Average Loss Per County", f"${average_predicted/1e6:,.2f}M")
+
 # Choropleth map
 st.subheader("Forecast Map")
 fig = px.choropleth(
@@ -112,3 +120,25 @@ st.subheader("Top 15 Counties by Predicted Loss")
 top_15 = df[["FIPS", "STATE", "COUNTY", "Predicted_EAL_VALT"]].sort_values(
     by="Predicted_EAL_VALT", ascending=False).head(15)
 st.dataframe(top_15.style.format({"Predicted_EAL_VALT": "${:,.0f}"}))
+
+# Model explanation
+with st.expander("About This Forecast"):
+    st.markdown("""
+### Project Background
+
+This dashboard was developed as part of a capstone project for the **University of Hartford’s Master of Science in Business Analytics** program. The goal is to help users explore how different natural hazard scenarios might impact estimated disaster-related losses across U.S. counties.
+
+### Model Details
+
+- **Model Type:** XGBoost Regressor (Gradient Boosted Decision Trees)
+- **Target Variable:** Estimated Annual Loss (EAL_VALT)
+- **Features Used:** Exposure levels to 18 natural hazards (e.g., hurricane, wildfire, flooding), along with resilience and vulnerability indicators from FEMA’s [National Risk Index](https://hazards.fema.gov/nri)
+- **Preprocessing:** Included missing value imputation, feature normalization, and hazard reweighting logic
+- **Training Data:** FEMA NRI dataset (2023 snapshot), ~3,000 U.S. counties
+
+### Important Notes
+
+- The hazard sliders simulate increases in risk levels by applying multipliers to each hazard’s baseline exposure score.
+- Predictions shown are hypothetical and meant for **educational and exploratory purposes only**.
+- Do not use this tool for real-world financial or policy decisions without consulting domain experts.
+    """)
