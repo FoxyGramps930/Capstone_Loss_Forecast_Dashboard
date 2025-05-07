@@ -83,13 +83,18 @@ df["ColorScaleEAL"] = np.sqrt(df["Predicted_EAL_VALT"])  # more sensitivity to l
 
 # Dashboard layout
 st.title("Forecasted Disaster Losses by County")
-st.markdown("""
-This AI model predicts estimated disaster-related insurance claim risk over the next 5 years for each U.S. county.
-**How to Use:**
-- Adjust the sliders to simulate different hazard conditions.
-- Hover over counties on the map for detailed estimates.
-- View the top 15 counties by predicted loss below the map.
-""")
+
+st.markdown(
+    """
+    This AI model predicts estimated disaster-related insurance claim risk over the **next 5 years** for each U.S. county.
+
+    **How to Use:**
+    - Adjust the sliders to simulate different hazard conditions.
+    - Hover over counties on the map for detailed estimates.
+    - View the top 15 counties by predicted loss below the map.
+    """,
+    unsafe_allow_html=True
+)
 
 # High-level metrics
 total_predicted = df["Predicted_EAL_VALT"].sum()
