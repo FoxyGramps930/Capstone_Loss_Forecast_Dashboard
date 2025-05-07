@@ -22,7 +22,7 @@ df["FIPS"] = df["NRI_ID"].str[1:]
 
 # Region Mapping
 region_map = {
-    "All Regions": [],
+    "All Regions": df["STATE"].unique().tolist(),
     "Northeast": ["ME", "NH", "VT", "MA", "RI", "CT", "NY", "NJ", "PA"],
     "Midwest": ["OH", "MI", "IN", "IL", "WI", "MN", "IA", "MO", "ND", "SD", "NE", "KS"],
     "South": ["DE", "MD", "DC", "VA", "WV", "NC", "SC", "GA", "FL", "KY", "TN", "MS", "AL", "OK", "TX", "AR", "LA"],
@@ -34,7 +34,7 @@ all_regions = list(region_map.keys())
 # Sidebar filters
 with st.sidebar:
     selected_region = st.selectbox("Select Region", all_regions)
-    selected_states = region_map[selected_region] if selected_region != "All Regions" else df["STATE"].unique().tolist()
+    selected_states = region_map[selected_region]
 
 # Hazard multipliers
 hazard_groups = {
@@ -91,9 +91,6 @@ df["ColorScaleEAL"] = np.log1p(df["Predicted_EAL_VALT"])
 
 # Filter by selected region
 df_filtered = df[df["STATE"].isin(selected_states)]
-if df_filtered.empty:
-    st.warning("No counties match the selected filters. Showing all counties instead.")
-    df_filtered = df.copy()
 
 # Main dashboard content
 st.title("Forecasted Disaster Losses by County")
