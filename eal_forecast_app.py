@@ -34,18 +34,13 @@ all_states = sorted({state for states in region_map.values() for state in states
 # Sidebar filters
 with st.sidebar:
     show_filters = st.checkbox("Show Region and State Filters", value=True)
+    selected_region = "All Regions"
+    selected_states = all_states
     if show_filters:
         st.header("Filter Counties")
         selected_region = st.selectbox("Select Region", ["All Regions"] + all_regions)
-
-        if selected_region == "All Regions":
-            selected_states = st.multiselect("States", all_states, default=all_states)
-        else:
-            default_states = region_map[selected_region]
-            selected_states = st.multiselect("States", all_states, default=default_states)
-    else:
-        selected_region = "All Regions"
-        selected_states = all_states
+        all_matching_states = region_map[selected_region] if selected_region != "All Regions" else all_states
+        selected_states = st.multiselect("States", all_states, default=all_matching_states)
 
 # Hazard multipliers
 hazard_groups = {
