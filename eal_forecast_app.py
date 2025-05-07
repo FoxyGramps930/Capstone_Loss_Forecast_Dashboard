@@ -23,22 +23,6 @@ df["FIPS"] = df["NRI_ID"].str[1:]
 # Ensure all state codes are uppercase and clean
 df["STATE"] = df["STATE"].str.upper().str.strip()
 
-# Region Mapping
-region_map = {
-    "All Regions": df["STATE"].unique().tolist(),
-    "Northeast": ["ME", "NH", "VT", "MA", "RI", "CT", "NY", "NJ", "PA"],
-    "Midwest": ["OH", "MI", "IN", "IL", "WI", "MN", "IA", "MO", "ND", "SD", "NE", "KS"],
-    "South": ["DE", "MD", "DC", "VA", "WV", "NC", "SC", "GA", "FL", "KY", "TN", "MS", "AL", "OK", "TX", "AR", "LA"],
-    "West": ["ID", "MT", "WY", "NV", "UT", "CO", "AZ", "NM", "AK", "WA", "OR", "CA", "HI"]
-}
-
-all_regions = list(region_map.keys())
-
-# Sidebar filters
-with st.sidebar:
-    selected_region = st.selectbox("Select Region", all_regions)
-    selected_states = region_map[selected_region]
-
 # Hazard multipliers
 hazard_groups = {
     "Geophysical Hazards": {
@@ -92,9 +76,8 @@ for col in feature_cols:
 df["Predicted_EAL_VALT"] = model.predict(X)
 df["ColorScaleEAL"] = np.log1p(df["Predicted_EAL_VALT"])
 
-# Filter by selected region
-selected_states_set = set(selected_states)
-df_filtered = df[df["STATE"].isin(selected_states_set)]
+# No regional filtering
+df_filtered = df.copy()
 
 # Main dashboard content
 st.title("Forecasted Disaster Losses by County")
