@@ -4,6 +4,17 @@ import numpy as np
 import json
 import joblib
 import plotly.express as px
+import gzip
+import joblib
+import json
+
+# Load compressed model
+with gzip.open("rf_model.pkl.gz", "rb") as f:
+    model = joblib.load(f)
+
+# Load feature column names
+with open("feature_columns.json") as f:
+    feature_cols = json.load(f)
 
 st.set_page_config(layout="wide")
 
