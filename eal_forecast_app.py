@@ -20,6 +20,9 @@ df = pd.read_csv("county_hazard_dataset.csv")
 df[feature_cols] = df[feature_cols].fillna(0)
 df["FIPS"] = df["NRI_ID"].str[1:]
 
+# Ensure all state codes are uppercase and clean
+df["STATE"] = df["STATE"].str.upper().str.strip()
+
 # Region Mapping
 region_map = {
     "All Regions": df["STATE"].unique().tolist(),
@@ -90,7 +93,8 @@ df["Predicted_EAL_VALT"] = model.predict(X)
 df["ColorScaleEAL"] = np.log1p(df["Predicted_EAL_VALT"])
 
 # Filter by selected region
-df_filtered = df[df["STATE"].isin(selected_states)]
+selected_states_set = set(selected_states)
+df_filtered = df[df["STATE"].isin(selected_states_set)]
 
 # Main dashboard content
 st.title("Forecasted Disaster Losses by County")
