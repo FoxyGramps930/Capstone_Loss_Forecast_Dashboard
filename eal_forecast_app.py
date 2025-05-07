@@ -39,12 +39,12 @@ with st.sidebar:
         selected_region = st.selectbox("Select Region", ["All Regions"] + all_regions)
 
         if selected_region == "All Regions":
-            default_states = all_states
+            selected_states = st.multiselect("States", all_states, default=all_states)
         else:
             default_states = region_map[selected_region]
-
-        selected_states = st.multiselect("States", all_states, default=default_states)
+            selected_states = st.multiselect("States", all_states, default=default_states)
     else:
+        selected_region = "All Regions"
         selected_states = all_states
 
 # Hazard multipliers
@@ -84,7 +84,7 @@ with st.sidebar:
         st.header("Hazard Multipliers")
         if st.button("Reset All Multipliers"):
             for col in feature_cols:
-                st.session_state.multipliers = {col: 1.0 for col in feature_cols}
+                st.session_state.multipliers[col] = 1.0
 
         for group, hazards in hazard_groups.items():
             with st.expander(group, expanded=False):
@@ -102,7 +102,7 @@ for col in feature_cols:
 df["Predicted_EAL_VALT"] = model.predict(X)
 df["ColorScaleEAL"] = np.sqrt(df["Predicted_EAL_VALT"])
 
-# Filter by state
+# Filter by selected states
 df_filtered = df[df["STATE"].isin(selected_states)]
 if df_filtered.empty:
     st.warning("No counties match the selected filters. Showing all counties instead.")
