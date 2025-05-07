@@ -20,8 +20,9 @@ df = pd.read_csv("county_hazard_dataset.csv")
 df[feature_cols] = df[feature_cols].fillna(0)
 df["FIPS"] = df["NRI_ID"].str[1:]
 
-# State and Region Mapping
+# Region Mapping
 region_map = {
+    "All Regions": [],
     "Northeast": ["ME", "NH", "VT", "MA", "RI", "CT", "NY", "NJ", "PA"],
     "Midwest": ["OH", "MI", "IN", "IL", "WI", "MN", "IA", "MO", "ND", "SD", "NE", "KS"],
     "South": ["DE", "MD", "DC", "VA", "WV", "NC", "SC", "GA", "FL", "KY", "TN", "MS", "AL", "OK", "TX", "AR", "LA"],
@@ -29,20 +30,11 @@ region_map = {
 }
 
 all_regions = list(region_map.keys())
-all_states = sorted({state for states in region_map.values() for state in states})
 
 # Sidebar filters
 with st.sidebar:
-    show_filters = st.checkbox("Show Region and State Filters", value=True)
-    selected_region = "All Regions"
-    selected_states = all_states
-    if show_filters:
-        st.header("Filter Counties")
-        selected_region = st.selectbox("Select Region", ["All Regions"] + all_regions)
-        default_states = region_map[selected_region] if selected_region != "All Regions" else all_states
-        selected_states = st.multiselect("States", all_states, default=default_states)
-        if selected_region != "All Regions":
-            selected_states = [s for s in selected_states if s in region_map[selected_region]]
+    selected_region = st.selectbox("Select Region", all_regions)
+    selected_states = region_map[selected_region] if selected_region != "All Regions" else df["STATE"].unique().tolist()
 
 # Hazard multipliers
 hazard_groups = {
@@ -76,20 +68,18 @@ if "multipliers" not in st.session_state:
     st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
 with st.sidebar:
-    show_multipliers = st.checkbox("Show Hazard Multipliers", value=True)
-    if show_multipliers:
-        st.header("Hazard Multipliers")
-        if st.button("Reset All Multipliers"):
-            for col in feature_cols:
-                st.session_state.multipliers[col] = 1.0
+    st.header("Hazard Multipliers")
+    if st.button("Reset All Multipliers"):
+        for col in feature_cols:
+            st.session_state.multipliers[col] = 1.0
 
-        for group, hazards in hazard_groups.items():
-            with st.expander(group, expanded=False):
-                for label, col in hazards.items():
-                    if col in feature_cols:
-                        st.session_state.multipliers[col] = st.slider(
-                            label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
-                        )
+    for group, hazards in hazard_groups.items():
+        with st.expander(group, expanded=False):
+            for label, col in hazards.items():
+                if col in feature_cols:
+                    st.session_state.multipliers[col] = st.slider(
+                        label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
+                    )
 
 # Apply multipliers and predict
 X = df[feature_cols].copy()
@@ -97,9 +87,9 @@ for col in feature_cols:
     X[col] *= st.session_state.multipliers.get(col, 1.0)
 
 df["Predicted_EAL_VALT"] = model.predict(X)
-df["ColorScaleEAL"] = np.sqrt(df["Predicted_EAL_VALT"])
+df["ColorScaleEAL"] = np.log1p(df["Predicted_EAL_VALT"])  # log scale for color sensitivity
 
-# Filter by selected states
+# Filter by selected region
 df_filtered = df[df["STATE"].isin(selected_states)]
 if df_filtered.empty:
     st.warning("No counties match the selected filters. Showing all counties instead.")
@@ -120,8 +110,8 @@ fig = px.choropleth(
     locations="FIPS",
     color="ColorScaleEAL",
     color_continuous_scale="Viridis",
-    range_color=(df_filtered["ColorScaleEAL"].min(), df_filtered["ColorScaleEAL"].quantile(0.95)),
-    labels={"ColorScaleEAL": "Predicted Loss"},
+    range_color=(df_filtered["ColorScaleEAL"].min(), df_filtered["ColorScaleEAL"].max()),
+    labels={"ColorScaleEAL": "Predicted Loss (log scale)"},
     scope="usa"
 )
 fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
