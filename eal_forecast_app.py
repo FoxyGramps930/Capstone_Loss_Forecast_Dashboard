@@ -15,6 +15,7 @@ with gzip.open("rf_model.pkl.gz", "rb") as f:
 with open("feature_columns.json") as f:
     feature_cols = json.load(f)
 
+# Group hazards by theme
 hazard_groups = {
     "Geophysical Hazards": {
         "Avalanche": "AVLN_EALT",
@@ -41,6 +42,25 @@ hazard_groups = {
         "Wildfire": "WFIR_EALT"
     }
 }
+
+# Initialize multipliers
+if "multipliers" not in st.session_state:
+    st.session_state.multipliers = {col: 1.0 for col in feature_cols}
+
+# Sidebar sliders grouped by theme
+st.sidebar.header("Hazard Multipliers")
+if st.sidebar.button("Reset All Multipliers"):
+    for col in feature_cols:
+        st.session_state.multipliers[col] = 1.0
+
+for group, hazards in hazard_groups.items():
+    with st.sidebar.expander(group, expanded=False):
+        for label, col in hazards.items():
+            if col in feature_cols:
+                st.session_state.multipliers[col] = st.slider(
+                    label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
+                )
+
 
 hazard_label_lookup = {v: k for group in hazard_groups.values() for k, v in group.items()}
 
