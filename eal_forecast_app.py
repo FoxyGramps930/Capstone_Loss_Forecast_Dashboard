@@ -52,9 +52,9 @@ group_definitions = {
 # Preset scenarios
 presets = {
     "Default": {col: 1.0 for col in feature_cols},
-    "Hurricane Season": {"HRCN_EALT": 2.5, "RFLD_EALT": 1.5, "TRND_EALT": 1.3},
+    "Prolonged Hurricane Season": {"HRCN_EALT": 2.5, "RFLD_EALT": 1.5, "TRND_EALT": 1.3},
     "Wildfire Surge": {"WFIR_EALT": 3.0, "DRGT_EALT": 2.0, "HAIL_EALT": 1.2},
-    "Freeze Event": {"CWAV_EALT": 2.5, "WNTW_EALT": 2.0, "ISTM_EALT": 2.5}
+    "Prolonged Freeze Chill": {"CWAV_EALT": 2.5, "WNTW_EALT": 2.0, "ISTM_EALT": 2.5}
 }
 
 if "multipliers" not in st.session_state:
@@ -64,9 +64,9 @@ if "multipliers" not in st.session_state:
 with st.sidebar:
     st.header("Hazard Scenario Presets")
     selected_preset = st.radio("Choose a Preset", list(presets.keys()))
-    if st.button("Apply Preset"):
-        for col in feature_cols:
-            st.session_state.multipliers[col] = presets[selected_preset].get(col, 1.0)
+    preset_values = presets[selected_preset]
+    for col in preset_values:
+        st.session_state.multipliers[col] = preset_values[col]
 
     if st.button("Reset All Multipliers"):
         for col in feature_cols:
@@ -93,7 +93,7 @@ for col in feature_cols:
     X[col] *= st.session_state.multipliers.get(col, 1.0)
 
 df["Predicted_EAL_VALT"] = model.predict(X)
-df["ColorScaleEAL"] = np.log1p(df["Predicted_EAL_VALT"])
+df["ColorScaleEAL"] = np.sqrt(df["Predicted_EAL_VALT"])  # more sensitivity to large values
 
 # Dashboard layout
 st.title("Forecasted Disaster Losses by County")
@@ -113,9 +113,9 @@ fig = px.choropleth(
     geojson="https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json",
     locations="FIPS",
     color="ColorScaleEAL",
-    color_continuous_scale="Viridis",
-    range_color=(df["ColorScaleEAL"].min(), df["ColorScaleEAL"].quantile(0.95)),
-    labels={"ColorScaleEAL": "Predicted Loss (log scale)"},
+    color_continuous_scale=["#001f3f", "#0074D9", "#7FDBFF", "#FFDC00", "#FF4136"],
+    range_color=(df["ColorScaleEAL"].min(), df["ColorScaleEAL"].quantile(0.97)),
+    labels={"ColorScaleEAL": "Predicted Loss (scaled)"},
     scope="usa"
 )
 fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
