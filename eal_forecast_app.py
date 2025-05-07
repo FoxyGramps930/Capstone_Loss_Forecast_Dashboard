@@ -84,8 +84,7 @@ df["ColorScaleEAL"] = np.sqrt(df["Predicted_EAL_VALT"])  # more sensitivity to l
 # Dashboard layout
 st.title("Forecasted Disaster Losses by County")
 st.markdown("""
-This interactive dashboard predicts expected annual losses (EAL) by U.S. county due to natural hazards.
-
+This AI model predicts estimated disaster-related insurance claim risk over the <strong>next 5 years</strong> for each U.S. county.
 **How to Use:**
 - Adjust the sliders to simulate different hazard conditions.
 - Hover over counties on the map for detailed estimates.
@@ -99,19 +98,6 @@ average_predicted = df["Predicted_EAL_VALT"].mean()
 col1, col2 = st.columns(2)
 col1.metric("Total Predicted Annual Loss (Nationwide)", f"${total_predicted/1e9:,.2f}B")
 col2.metric("Average Loss Per County", f"${average_predicted/1e6:,.2f}M")
-
-# Forecast horizon notice
-st.markdown(
-    """
-    <div style='padding: 1rem; background-color: #f0f2f6; border-radius: 0.5rem; text-align: center; margin-top: 1rem; margin-bottom: 2rem;'>
-        <h4 style='margin-bottom: 0.5rem;'>Forecast Horizon</h4>
-        <p style='margin: 0; font-size: 1rem;'>
-            This AI model predicts estimated disaster-related insurance claim risk over the <strong>next 5 years</strong> for each U.S. county.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 # Choropleth map
 st.subheader("Forecast Map")
