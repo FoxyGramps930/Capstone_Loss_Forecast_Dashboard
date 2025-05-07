@@ -19,12 +19,10 @@ with open("feature_columns.json") as f:
 df = pd.read_csv("county_hazard_dataset.csv")
 df[feature_cols] = df[feature_cols].fillna(0)
 df["FIPS"] = df["NRI_ID"].str[1:]
-
-# Ensure all state codes are uppercase and clean
 df["STATE"] = df["STATE"].str.upper().str.strip()
 
 # Hazard multipliers
-hazard_groups = {
+group_definitions = {
     "Geophysical Hazards": {
         "Avalanche": "AVLN_EALT",
         "Earthquake": "ERQK_EALT",
@@ -54,21 +52,28 @@ hazard_groups = {
 if "multipliers" not in st.session_state:
     st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
+# Sidebar controls
 with st.sidebar:
-    st.header("Hazard Multipliers")
+    st.header("Adjust Hazard Multipliers")
+    st.caption("Use the sliders to simulate changes in severity for different types of hazards.")
+
     if st.button("Reset All Multipliers"):
         for col in feature_cols:
             st.session_state.multipliers[col] = 1.0
 
-    for group, hazards in hazard_groups.items():
+    for group, hazards in group_definitions.items():
         with st.expander(group, expanded=False):
             for label, col in hazards.items():
                 if col in feature_cols:
                     st.session_state.multipliers[col] = st.slider(
-                        label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
+                        label,
+                        min_value=0.0,
+                        max_value=5.0,
+                        value=st.session_state.multipliers[col],
+                        step=0.1
                     )
 
-# Apply multipliers and predict
+# Apply multipliers
 X = df[feature_cols].copy()
 for col in feature_cols:
     X[col] *= st.session_state.multipliers.get(col, 1.0)
@@ -76,25 +81,26 @@ for col in feature_cols:
 df["Predicted_EAL_VALT"] = model.predict(X)
 df["ColorScaleEAL"] = np.log1p(df["Predicted_EAL_VALT"])
 
-# No regional filtering
-df_filtered = df.copy()
-
-# Main dashboard content
+# Dashboard layout
 st.title("Forecasted Disaster Losses by County")
 st.markdown("""
-This dashboard forecasts expected annual losses (EAL) by county across the United States based on user-defined hazard multipliers.
-Use the filters to explore how different hazard scenarios impact forecasted losses.
+This interactive dashboard predicts expected annual losses (EAL) by U.S. county due to natural hazards.
+
+**How to Use:**
+- Adjust hazard multipliers using the sidebar.
+- Hover over counties on the map for details.
+- View the top 15 highest-loss counties under the map.
 """)
 
 # Choropleth map
 st.subheader("Forecast Map")
 fig = px.choropleth(
-    df_filtered,
+    df,
     geojson="https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json",
     locations="FIPS",
     color="ColorScaleEAL",
     color_continuous_scale="Viridis",
-    range_color=(df_filtered["ColorScaleEAL"].min(), df_filtered["ColorScaleEAL"].quantile(0.95)),
+    range_color=(df["ColorScaleEAL"].min(), df["ColorScaleEAL"].quantile(0.95)),
     labels={"ColorScaleEAL": "Predicted Loss (log scale)"},
     scope="usa"
 )
@@ -103,6 +109,6 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Top 15 counties table
 st.subheader("Top 15 Counties by Predicted Loss")
-top_15 = df_filtered[["FIPS", "STATE", "COUNTY", "Predicted_EAL_VALT"]].sort_values(
+top_15 = df[["FIPS", "STATE", "COUNTY", "Predicted_EAL_VALT"]].sort_values(
     by="Predicted_EAL_VALT", ascending=False).head(15)
 st.dataframe(top_15.style.format({"Predicted_EAL_VALT": "${:,.0f}"}))
