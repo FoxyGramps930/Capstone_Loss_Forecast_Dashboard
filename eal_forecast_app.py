@@ -114,8 +114,8 @@ fig = px.choropleth(
 )
 fig.update_layout(
     margin={"r": 0, "t": 0, "l": 0, "b": 0},
-    paper_bgcolor="#000000",
-    geo=dict(bgcolor="#000000")
+    paper_bgcolor="#0e1117",
+    geo=dict(bgcolor="#0e1117")
 )
 st.plotly_chart(fig, use_container_width=True)
 
