@@ -39,8 +39,10 @@ with st.sidebar:
     if show_filters:
         st.header("Filter Counties")
         selected_region = st.selectbox("Select Region", ["All Regions"] + all_regions)
-        all_matching_states = region_map[selected_region] if selected_region != "All Regions" else all_states
-        selected_states = st.multiselect("States", all_states, default=all_matching_states)
+        default_states = region_map[selected_region] if selected_region != "All Regions" else all_states
+        selected_states = st.multiselect("States", all_states, default=default_states)
+        if selected_region != "All Regions":
+            selected_states = [s for s in selected_states if s in region_map[selected_region]]
 
 # Hazard multipliers
 hazard_groups = {
