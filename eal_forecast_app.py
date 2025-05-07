@@ -33,15 +33,19 @@ all_states = sorted({state for states in region_map.values() for state in states
 
 # Sidebar filters
 with st.sidebar:
-    st.header("Filter Counties")
-    selected_region = st.selectbox("Select Region", ["All Regions"] + all_regions)
+    show_filters = st.checkbox("Show Region and State Filters", value=True)
+    if show_filters:
+        st.header("Filter Counties")
+        selected_region = st.selectbox("Select Region", ["All Regions"] + all_regions)
 
-    if selected_region == "All Regions":
-        default_states = all_states
+        if selected_region == "All Regions":
+            default_states = all_states
+        else:
+            default_states = region_map[selected_region]
+
+        selected_states = st.multiselect("States", all_states, default=default_states)
     else:
-        default_states = region_map[selected_region]
-
-    selected_states = st.multiselect("States", all_states, default=default_states)
+        selected_states = all_states
 
 # Hazard multipliers
 hazard_groups = {
@@ -75,18 +79,20 @@ if "multipliers" not in st.session_state:
     st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
 with st.sidebar:
-    st.header("Hazard Multipliers")
-    if st.button("Reset All Multipliers"):
-        for col in feature_cols:
-            st.session_state.multipliers = {col: 1.0 for col in feature_cols}
+    show_multipliers = st.checkbox("Show Hazard Multipliers", value=True)
+    if show_multipliers:
+        st.header("Hazard Multipliers")
+        if st.button("Reset All Multipliers"):
+            for col in feature_cols:
+                st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
-    for group, hazards in hazard_groups.items():
-        with st.expander(group, expanded=False):
-            for label, col in hazards.items():
-                if col in feature_cols:
-                    st.session_state.multipliers[col] = st.slider(
-                        label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
-                    )
+        for group, hazards in hazard_groups.items():
+            with st.expander(group, expanded=False):
+                for label, col in hazards.items():
+                    if col in feature_cols:
+                        st.session_state.multipliers[col] = st.slider(
+                            label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
+                        )
 
 # Apply multipliers and predict
 X = df[feature_cols].copy()
