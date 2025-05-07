@@ -49,17 +49,31 @@ group_definitions = {
     }
 }
 
+# Preset scenarios
+presets = {
+    "Default": {col: 1.0 for col in feature_cols},
+    "Hurricane Season": {"HRCN_EALT": 2.5, "RFLD_EALT": 1.5, "TRND_EALT": 1.3},
+    "Wildfire Surge": {"WFIR_EALT": 3.0, "DRGT_EALT": 2.0, "HAIL_EALT": 1.2},
+    "Freeze Event": {"CWAV_EALT": 2.5, "WNTW_EALT": 2.0, "ISTM_EALT": 2.5}
+}
+
 if "multipliers" not in st.session_state:
     st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
 # Sidebar controls
 with st.sidebar:
-    st.header("Adjust Hazard Multipliers")
-    st.caption("Use the sliders to simulate changes in severity for different types of hazards.")
+    st.header("Hazard Scenario Presets")
+    selected_preset = st.radio("Choose a Preset", list(presets.keys()))
+    if st.button("Apply Preset"):
+        for col in feature_cols:
+            st.session_state.multipliers[col] = presets[selected_preset].get(col, 1.0)
 
     if st.button("Reset All Multipliers"):
         for col in feature_cols:
             st.session_state.multipliers[col] = 1.0
+
+    st.header("Hazard Multipliers")
+    st.caption("Use the sliders to simulate changes in severity for different types of hazards.")
 
     for group, hazards in group_definitions.items():
         with st.expander(group, expanded=False):
@@ -68,7 +82,7 @@ with st.sidebar:
                     st.session_state.multipliers[col] = st.slider(
                         label,
                         min_value=0.0,
-                        max_value=5.0,
+                        max_value=3.0,
                         value=st.session_state.multipliers[col],
                         step=0.1
                     )
@@ -87,9 +101,9 @@ st.markdown("""
 This interactive dashboard predicts expected annual losses (EAL) by U.S. county due to natural hazards.
 
 **How to Use:**
-- Adjust hazard multipliers using the sidebar.
-- Hover over counties on the map for details.
-- View the top 15 highest-loss counties under the map.
+- Select a hazard scenario or adjust sliders manually to explore forecasted risk.
+- Hover over counties on the map for detailed estimates.
+- Scroll down to view top 15 counties by loss.
 """)
 
 # Choropleth map
