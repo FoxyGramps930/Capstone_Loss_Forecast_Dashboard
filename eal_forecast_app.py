@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,13 +8,14 @@ import plotly.express as px
 
 st.set_page_config(layout="wide")
 
+# Load model and features
 with gzip.open("rf_model.pkl.gz", "rb") as f:
     model = joblib.load(f)
 
 with open("feature_columns.json") as f:
     feature_cols = json.load(f)
 
-# Group hazards by theme
+# Hazard groupings for sliders
 hazard_groups = {
     "Geophysical Hazards": {
         "Avalanche": "AVLN_EALT",
@@ -43,42 +43,26 @@ hazard_groups = {
     }
 }
 
-# Initialize multipliers
-if "multipliers" not in st.session_state:
-    st.session_state.multipliers = {col: 1.0 for col in feature_cols}
-
-# Sidebar sliders grouped by theme
-st.sidebar.header("Hazard Multipliers")
-if st.sidebar.button("Reset All Multipliers"):
-    for col in feature_cols:
-        st.session_state.multipliers[col] = 1.0
-
-for group, hazards in hazard_groups.items():
-    with st.sidebar.expander(group, expanded=False):
-        for label, col in hazards.items():
-            if col in feature_cols:
-                st.session_state.multipliers[col] = st.slider(
-                    label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
-                )
-
-
 hazard_label_lookup = {v: k for group in hazard_groups.values() for k, v in group.items()}
 
-st.title("Forecasted Disaster Losses by County")
-
+# Load and preprocess data
 df = pd.read_csv("county_hazard_dataset.csv")
 df[feature_cols] = df[feature_cols].fillna(0)
 df["FIPS"] = df["NRI_ID"].str[1:]
 df["BASE_EAL_VALT"] = model.predict(df[feature_cols])
 
+# Sidebar UI
 st.sidebar.header("Hazard Multipliers")
+
+# Initialize session state
+if "multipliers" not in st.session_state:
+    st.session_state.multipliers = {col: 1.0 for col in feature_cols}
+
+# Reset button
 if st.sidebar.button("Reset All Multipliers"):
     st.session_state.multipliers = {col: 1.0 for col in feature_cols}
-else:
-    if "multipliers" not in st.session_state:
-        st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
-# Slider groups
+# Grouped sliders
 for group, hazards in hazard_groups.items():
     with st.sidebar.expander(group, expanded=False):
         for label, col in hazards.items():
@@ -87,12 +71,17 @@ for group, hazards in hazard_groups.items():
                     label, 0.0, 5.0, st.session_state.multipliers[col], 0.1
                 )
 
+# Apply multipliers
 X = df[feature_cols].copy()
 for col in feature_cols:
     X[col] *= st.session_state.multipliers.get(col, 1.0)
 
+# Predict new values
 df["Predicted_EAL_VALT"] = model.predict(X)
 df["ColorScaleEAL"] = np.sqrt(df["Predicted_EAL_VALT"])
+
+# Main content
+st.title("Forecasted Disaster Losses by County")
 
 st.subheader("Forecast Map by County")
 fig = px.choropleth(
