@@ -78,7 +78,7 @@ with st.sidebar:
     st.header("Hazard Multipliers")
     if st.button("Reset All Multipliers"):
         for col in feature_cols:
-            st.session_state.multipliers[col] = 1.0
+            st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
     for group, hazards in hazard_groups.items():
         with st.expander(group, expanded=False):
@@ -98,6 +98,9 @@ df["ColorScaleEAL"] = np.sqrt(df["Predicted_EAL_VALT"])
 
 # Filter by state
 df_filtered = df[df["STATE"].isin(selected_states)]
+if df_filtered.empty:
+    st.warning("No counties match the selected filters. Showing all counties instead.")
+    df_filtered = df.copy()
 
 # Main dashboard content
 st.title("Forecasted Disaster Losses by County")
