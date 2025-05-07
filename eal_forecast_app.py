@@ -49,25 +49,11 @@ group_definitions = {
     }
 }
 
-# Preset scenarios
-presets = {
-    "Default": {col: 1.0 for col in feature_cols},
-    "Prolonged Hurricane Season": {"HRCN_EALT": 2.5, "RFLD_EALT": 1.5, "TRND_EALT": 1.3},
-    "Wildfire Surge": {"WFIR_EALT": 3.0, "DRGT_EALT": 2.0, "HAIL_EALT": 1.2},
-    "Prolonged Freeze Chill": {"CWAV_EALT": 2.5, "WNTW_EALT": 2.0, "ISTM_EALT": 2.5}
-}
-
 if "multipliers" not in st.session_state:
     st.session_state.multipliers = {col: 1.0 for col in feature_cols}
 
 # Sidebar controls
 with st.sidebar:
-    st.header("Hazard Scenario Presets")
-    selected_preset = st.radio("Choose a Preset", list(presets.keys()))
-    preset_values = presets[selected_preset]
-    for col in preset_values:
-        st.session_state.multipliers[col] = preset_values[col]
-
     if st.button("Reset All Multipliers"):
         for col in feature_cols:
             st.session_state.multipliers[col] = 1.0
@@ -101,9 +87,9 @@ st.markdown("""
 This interactive dashboard predicts expected annual losses (EAL) by U.S. county due to natural hazards.
 
 **How to Use:**
-- Select a hazard scenario or adjust sliders manually to explore forecasted risk.
+- Adjust the sliders to simulate different hazard conditions.
 - Hover over counties on the map for detailed estimates.
-- Scroll down to view top 15 counties by loss.
+- View the top 15 counties by predicted loss below the map.
 """)
 
 # Choropleth map
