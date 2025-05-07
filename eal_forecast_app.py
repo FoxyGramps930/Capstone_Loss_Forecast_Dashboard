@@ -100,6 +100,19 @@ col1, col2 = st.columns(2)
 col1.metric("Total Predicted Annual Loss (Nationwide)", f"${total_predicted/1e9:,.2f}B")
 col2.metric("Average Loss Per County", f"${average_predicted/1e6:,.2f}M")
 
+# Forecast horizon notice
+st.markdown(
+    """
+    <div style='padding: 1rem; background-color: #f0f2f6; border-radius: 0.5rem; text-align: center; margin-top: 1rem; margin-bottom: 2rem;'>
+        <h4 style='margin-bottom: 0.5rem;'>Forecast Horizon</h4>
+        <p style='margin: 0; font-size: 1rem;'>
+            This AI model predicts estimated disaster-related insurance claim risk over the <strong>next 5 years</strong> for each U.S. county.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 # Choropleth map
 st.subheader("Forecast Map")
 fig = px.choropleth(
